@@ -12,16 +12,31 @@ const app = express();
 const server = http.Server(app);
 const io = socketio(server);
 
-io.on('connection', socket => {
-  console.log('Usuário conectado', socket.id);
-});
-
 mongoose.connect('mongodb+srv://omnistack:omnistack@cluster0-y1oeh.mongodb.net/semana09?retryWrites=true&w=majority',
   {
     useNewUrlParser: true,
     useUnifiedTopology: true
   }
 )
+
+const connectedUsers = {};
+
+io.on('connection', socket => {
+  console.log(socket.handshake.query);
+  console.log('Usuário conectado', socket.id);
+
+  const { user_id } = socket.handshake.query;
+
+  connectedUsers[user_id] = socket.id;
+});
+
+app.use((req, res, next) => {
+  req.io = io;
+  req.connectedUsers = connectedUsers;
+
+  return next();
+});
+
 // GET, POST. PUT, DELETE
 
 // req.query = Acessar query params (para filtros)
